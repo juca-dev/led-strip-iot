@@ -56,13 +56,33 @@ char HTML[] PROGMEM = R"=====(
         <input type="password" value="" id="password" placeholder="PASSWORD">
       </div>
       <div>
-        <button class="primary" id="savebtn" type="button" onclick="myFunction()">SAVE</button>
+        <button class="primary" id="savebtn" type="button" onclick="settings()">SAVE</button>
+      </div>
+    </fieldset>
+  </form>
+  <form>
+    <fieldset>
+      <div>
+        <label for="color_r">R</label>      
+        <input type="range" min="0" max="255" value="0" id="color_r" onchange="setRGB()" />
+      </div>
+      <div>
+        <label for="color_g">G</label>      
+        <input type="range" min="0" max="255" value="0" id="color_g" onchange="setRGB()" />
+      </div>
+      <div>
+        <label for="color_b">B</label>      
+        <input type="range" min="0" max="255" value="0" id="color_b" onchange="setRGB()" />
+      </div>
+      <div>
+        <label for="color_a">A</label>      
+        <input type="range" min="0" max="255" value="125" id="color_a" onchange="setRGB()" />
       </div>
     </fieldset>
   </form>
 </body>
 <script>
-function myFunction()
+function settings()
 {
   console.log("button was clicked!");
 
@@ -72,6 +92,32 @@ function myFunction()
 
   var xhr = new XMLHttpRequest();
   var url = "/settings";
+
+  xhr.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      // Typical action to be performed when the document is ready:
+      if(xhr.responseText != null){
+        alert(xhr.responseText);
+      }
+    }
+  };
+
+  xhr.open("POST", url, true);
+  xhr.send(JSON.stringify(data));
+};
+function setRGB()
+{
+  console.log("rgb was clicked!");
+
+  var r = +document.getElementById("color_r").value;
+  var g = +document.getElementById("color_g").value;
+  var b = +document.getElementById("color_b").value;
+  var a = +document.getElementById("color_a").value;
+  var data = {r, g, b, a};
+  document.body.style.backgroundColor = 'rgb(' + r + ',' + g + ',' + b + ',' + (a/255) + ')';
+
+  var xhr = new XMLHttpRequest();
+  var url = "/rgb";
 
   xhr.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
@@ -161,7 +207,8 @@ public:
     this->device.show();
   }
 };
-Device LED_STRIP = Device(32, D4, 254);
+Device LED_STRIP = Device(118, D4, 254);
+//Device* LED_STRIP;
 
 void setup()
 {
@@ -174,7 +221,7 @@ void setup()
   server.on("/", []() { server.send_P(200, "text/html", HTML); });
   server.on("/toggle", toggleLED);
   server.on("/settings", HTTP_POST, handleSettingsUpdate);
-  // server.on("/rgb", HTTP_POST, handleSettingsUpdate);
+  server.on("/rgb", HTTP_POST, setRGB);
 
   server.begin();
 }
@@ -261,7 +308,7 @@ void wifiConnect()
             break;
         }
         Serial.println("");
-
+        //        LED_STRIP = new Device(32, D4, 254);
         Serial.println("Led configured");
       }
     }
@@ -292,6 +339,33 @@ void wifiConnect()
 void toggleLED()
 {
   digitalWrite(PIN_LED, !digitalRead(PIN_LED));
-  LED_STRIP.setAll(0, 254, 0);
+  server.send(204, "");
+}
+
+void setRGB()
+{
+  String data = server.arg("plain");
+  StaticJsonDocument<128> jObject;
+  DeserializationError err = deserializeJson(jObject, data);
+  if (err)
+  {
+    Serial.print("Error setRGB - deserializeJson: ");
+    Serial.println(err.c_str());
+    server.send(200, "application/json", "{\"status\" : \"NOK\"}");
+    return;
+  }
+  else
+  {
+    Serial.print("Data: ");
+    serializeJson(jObject, Serial);
+    Serial.println("");
+  }
+  byte r = jObject["r"];
+  byte g = jObject["g"];
+  byte b = jObject["b"];
+  LED_STRIP.setAll(r, g, b);
+  byte a = jObject["a"];
+  LED_STRIP.setBrightness(a);
+
   server.send(204, "");
 }
