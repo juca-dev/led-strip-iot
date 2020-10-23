@@ -3,13 +3,13 @@
 </p>
 
 <h3 align="center">
-  Easy led controller! 🚀
+  Easy [led strip](https://en.wikipedia.org/wiki/LED_strip_light) controller! 🚀
 </h3>
 
 <br>
 
 # Overview
-IoT Led controller
+IoT Led controller to WS2812 5050 (any addressable  rgb led strip)
 
 ## Tested devices
  - NodeMCU 1.0
@@ -17,8 +17,8 @@ IoT Led controller
 
 ## Libraries 
 Access `Sketch > Include Library > Manage Libraries...`, looking for:
- - ArduinoJson - v6.17.0 (by *Benoit Banchon*)
- - Adafruit NeoPixel - v1.5.0 (by *Adafruit*)
+ - [ArduinoJson](https://arduinojson.org/v6/example/) - v6.17.0 (by *Benoit Banchon*)
+ - [Adafruit NeoPixel](https://adafruit.github.io/Adafruit_NeoPixel/html/class_adafruit___neo_pixel.html) - v1.5.0 (by *Adafruit*)
 
 ## Settings
  - **Enable Flash (SPIFFS)** `Tools > Flash Size > 4M (1M SPIFFS)`
@@ -37,7 +37,7 @@ Access `Sketch > Include Library > Manage Libraries...`, looking for:
  Access [http://leds.juca.dev](http://leds.juca.dev) to control led
   - `GET /` html page
   - `GET /toggle` enable/disable *device led*
-  - `POST /settings` update settings
+  - `POST /wifi` update wifi credentials
     ```json
     {
         "ssid": "<WIFI_NAME>",
@@ -51,6 +51,13 @@ Access `Sketch > Include Library > Manage Libraries...`, looking for:
         "g": 0,
         "b": 120,
         "a": 254
+    }
+    ```
+  - `POST /device` update device
+    ```json
+    {
+        "pin": 2,
+        "leds": 148
     }
     ```
 
