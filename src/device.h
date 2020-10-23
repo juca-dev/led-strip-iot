@@ -8,14 +8,9 @@ Adafruit_NeoPixel _strip = Adafruit_NeoPixel(9999, D4, NEO_GRB + NEO_KHZ800);
 class Device
 {
 private:
-  uint16_t _leds;
-
 public:
-  Device(uint16_t leds, int pin)
+  Device()
   {
-    this->_leds = leds;
-
-    // this->_strip = Adafruit_NeoPixel(leds, pin, NEO_GRB + NEO_KHZ800);
   }
   void setup()
   {
@@ -25,9 +20,14 @@ public:
     delay(500);
     Serial.println("Device: ready");
   }
+  void update(uint16_t leds, uint16_t pin)
+  {
+    _strip.setPin(pin);
+    _strip.updateLength(leds);
+  }
   void clear()
   {
-    for (uint16_t i = 0; i < this->_leds; i++)
+    for (uint16_t i = 0; i < _strip.numPixels(); i++)
     {
       _strip.setPixelColor(i, _strip.Color(0, 0, 0)); //change RGB color value here
     }
@@ -39,7 +39,7 @@ public:
   }
   void setAll(byte r, byte g, byte b)
   {
-    for (uint16_t i = 0; i < this->_leds; i++)
+    for (uint16_t i = 0; i < _strip.numPixels(); i++)
     {
       _strip.setPixelColor(i, _strip.Color(r, g, b)); //change RGB color value here
     }
@@ -47,7 +47,7 @@ public:
   }
   int *split(String value)
   {
-    int result[(this->_leds * 3) + 1];
+    int result[(_strip.numPixels() * 3) + 1];
 
     char data[value.length() + 1];
     value.toCharArray(data, value.length() + 1);

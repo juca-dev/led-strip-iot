@@ -49,7 +49,7 @@ public:
   {
     this->_ledPin = pinLed;
     this->_storage = new Storage();
-    this->_device = new Device(118, D4);
+    this->_device = new Device();
     Serial.println("API: ready");
   }
 
@@ -58,7 +58,7 @@ public:
     pinMode(this->_ledPin, OUTPUT);
 
     this->_storage->setup();
-    
+
     this->_device->setup();
     StaticJsonDocument<256> rgb = this->getRGB();
     this->loadRGB(rgb);
@@ -127,9 +127,9 @@ public:
       Serial.println("API: No device config");
       return;
     }
-    int leds = json["leds"];
-    int pin = json["pin"];
-    // this->_device = new Device(leds, pin);
+    uint16_t leds = json["leds"];
+    uint16_t pin = json["pin"];
+    this->_device->update(leds, pin);
 
     StaticJsonDocument<256> rgb = this->getRGB();
     this->loadRGB(rgb);
