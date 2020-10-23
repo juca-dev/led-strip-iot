@@ -44,6 +44,19 @@ private:
     return json;
   }
 
+  StaticJsonDocument<256> getDevice()
+  {
+    String data = this->_storage->get("device.json");
+    StaticJsonDocument<256> json;
+    DeserializationError err = deserializeJson(json, data);
+    if (err)
+    {
+      Serial.print("### ERR: API - ");
+      Serial.println(err.c_str());
+    }
+    return json;
+  }
+
 public:
   Api(uint8_t pinLed)
   {
@@ -60,8 +73,10 @@ public:
     this->_storage->setup();
 
     this->_device->setup();
-    StaticJsonDocument<256> rgb = this->getRGB();
-    this->loadRGB(rgb);
+    StaticJsonDocument<256> json = this->getDevice();
+    this->loadDevice(json);
+    json = this->getRGB();
+    this->loadRGB(json);
 
     this->server.on("/", HTTP_GET, std::bind(&Api::web, this));
     this->server.on("/toggle", HTTP_POST, std::bind(&Api::toggle, this));
