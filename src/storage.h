@@ -15,7 +15,9 @@ public:
   }
   static void put(String key, String value)
   {
-    File file = SPIFFS.open("/" + key, "w");
+    String path = String("/" + key);
+    Serial.println(path);
+    File file = SPIFFS.open(path, "w");
     if (!file)
     {
       Serial.println("### ERR: Storage - opening file for writing");
@@ -30,13 +32,15 @@ public:
   }
   static String get(String key)
   {
+    String path = String("/" + key);
+    Serial.println(path);
     //check for stored credentials
-    if (!SPIFFS.exists("/" + key))
+    if (!SPIFFS.exists(path))
     {
       return "";
     }
 
-    File file = SPIFFS.open("/" + key, "r");
+    File file = SPIFFS.open(path, "r");
     if (!file)
     {
       Serial.println("### ERR: Storage - opening file for reading");

@@ -19,6 +19,7 @@ public:
 
     this->clear();
     delay(500);
+    Serial.println("Device: ready");
   }
   void clear()
   {

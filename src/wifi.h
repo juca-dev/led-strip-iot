@@ -24,20 +24,23 @@ public:
     {
         this->_ledPin = pin;
         this->_storage = new Storage();
+        Serial.println("Wifi: ready");
     }
     void setup()
     {
+        this->_storage->setup();
+
         //reset networking
         WiFi.softAPdisconnect(true);
         WiFi.disconnect();
         delay(1000);
         //check for stored credentials
         String config = this->_storage->get("wifi.json");
-        if (config)
+        if (config != "")
         {
             Serial.println("WIFI: has config file");
 
-            StaticJsonDocument<128> json;
+            StaticJsonDocument<256> json;
             DeserializationError err = deserializeJson(json, config);
             if (err)
             {

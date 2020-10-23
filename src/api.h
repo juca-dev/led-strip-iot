@@ -16,10 +16,12 @@ private:
   uint8_t _ledPin;
   Device *_device;
 
-  StaticJsonDocument<128> getJson()
+  StaticJsonDocument<256> getJson()
   {
     String data = server.arg("plain");
-    StaticJsonDocument<128> json;
+    Serial.print("API: data ");
+    Serial.println(data);
+    StaticJsonDocument<256> json;
     DeserializationError err = deserializeJson(json, data);
     if (err)
     {
@@ -29,10 +31,10 @@ private:
     return json;
   }
 
-  StaticJsonDocument<128> getRGB()
+  StaticJsonDocument<256> getRGB()
   {
     String data = this->_storage->get("rgb.json");
-    StaticJsonDocument<128> json;
+    StaticJsonDocument<256> json;
     DeserializationError err = deserializeJson(json, data);
     if (err)
     {
@@ -48,11 +50,14 @@ public:
     this->_ledPin = pinLed;
     this->_storage = new Storage();
     this->_device = new Device(118, D4);
+    Serial.println("API: ready");
   }
 
   void setup()
   {
     pinMode(this->_ledPin, OUTPUT);
+
+    this->_storage->setup();
 
     this->server.on("/", HTTP_GET, std::bind(&Api::web, this));
     this->server.on("/toggle", HTTP_POST, std::bind(&Api::toggle, this));
@@ -60,7 +65,7 @@ public:
     this->server.on("/rgb", HTTP_POST, std::bind(&Api::setRGB, this));
     this->server.on("/device", HTTP_POST, std::bind(&Api::setDevice, this));
 
-    server.begin();
+    this->server.begin();
   }
 
   void loop()
@@ -78,16 +83,15 @@ public:
   }
   void setRGB()
   {
-    StaticJsonDocument<128> json = this->getJson();
+    StaticJsonDocument<256> json = this->getJson();
     this->loadRGB(json);
-
     String value;
     serializeJson(json, value);
     this->_storage->put("rgb.json", value);
 
-    this->server.send(204, "");
+    this->server.send(200, "application/json", value.c_str());
   }
-  void loadRGB(StaticJsonDocument<128> json)
+  void loadRGB(StaticJsonDocument<256> json)
   {
     if (json.isNull())
     {
@@ -103,16 +107,16 @@ public:
   }
   void setDevice()
   {
-    StaticJsonDocument<128> json = this->getJson();
+    StaticJsonDocument<256> json = this->getJson();
     this->loadDevice(json);
 
     String value;
     serializeJson(json, value);
     this->_storage->put("device.json", value);
 
-    this->server.send(204, "");
+    this->server.send(200, "application/json", value.c_str());
   }
-  void loadDevice(StaticJsonDocument<128> json)
+  void loadDevice(StaticJsonDocument<256> json)
   {
     if (json.isNull())
     {
@@ -123,17 +127,17 @@ public:
     int pin = json["pin"];
     this->_device = new Device(leds, pin);
 
-    StaticJsonDocument<128> rgb = this->getRGB();
+    StaticJsonDocument<256> rgb = this->getRGB();
     this->loadRGB(rgb);
   }
   void setWifi()
   {
-    StaticJsonDocument<128> json = this->getJson();
+    StaticJsonDocument<256> json = this->getJson();
     String value;
     serializeJson(json, value);
     this->_storage->put("wifi.json", value);
 
-    server.send(200, "application/json", "{\"status\" : \"OK\"}");
+    server.send(200, "application/json", value.c_str());
 
     delay(500);
     Serial.println("API: Rebooting");
