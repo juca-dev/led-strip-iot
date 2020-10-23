@@ -89,7 +89,7 @@ public:
   }
   void loadRGB(StaticJsonDocument<128> json)
   {
-    if (json.size() == 0)
+    if (json.isNull())
     {
       Serial.println("API: No rgb config");
       return;
@@ -114,7 +114,7 @@ public:
   }
   void loadDevice(StaticJsonDocument<128> json)
   {
-    if (json.size() == 0)
+    if (json.isNull())
     {
       Serial.println("API: No device config");
       return;
