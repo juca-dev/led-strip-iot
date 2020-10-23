@@ -5,21 +5,23 @@ const char WEB_HTML[] PROGMEM = R"=====(
 <body>
   <form>
     <fieldset>
+      <legend>WIFI</legend>
       <div>
-        <label for="ssid">SSID</label>      
-        <input value="" id="ssid" placeholder="SSID">
+        <label for="wifi_ssid">SSID</label>      
+        <input value="" id="wifi_ssid" placeholder="SSID">
       </div>
       <div>
-        <label for="password">PASSWORD</label>
-        <input type="password" value="" id="password" placeholder="PASSWORD">
+        <label for="wifi_password">PASSWORD</label>
+        <input type="wifi_password" value="" id="wifi_password" placeholder="PASSWORD">
       </div>
       <div>
-        <button class="primary" id="savebtn" type="button" onclick="settings()">SAVE</button>
+        <button class="primary" id="savebtn" type="button" onclick="setWifi()">Connect</button>
       </div>
     </fieldset>
   </form>
   <form>
     <fieldset>
+      <legend>RGB</legend>
       <div>
         <label for="color_r">R</label>      
         <input type="range" min="0" max="255" value="0" id="color_r" onchange="setRGB()" />
@@ -40,20 +42,19 @@ const char WEB_HTML[] PROGMEM = R"=====(
   </form>
 </body>
 <script>
-function settings()
+function setWifi()
 {
-  console.log("button was clicked!");
+  console.log("wifi were updated!");
 
-  var ssid = document.getElementById("ssid").value;
-  var password = document.getElementById("password").value;
+  var ssid = document.getElementById("wifi_ssid").value;
+  var password = document.getElementById("wifi_password").value;
   var data = {ssid:ssid, password:password};
 
   var xhr = new XMLHttpRequest();
-  var url = "/settings";
+  var url = "/wifi";
 
-  xhr.onreadystatechange = function() {
+  xhr.onreadystatechange = () => {
     if (this.readyState == 4 && this.status == 200) {
-      // Typical action to be performed when the document is ready:
       if(xhr.responseText != null){
         alert(xhr.responseText);
       }
@@ -65,7 +66,7 @@ function settings()
 };
 function setRGB()
 {
-  console.log("rgb was clicked!");
+  console.log("rgb were updated!");
 
   var r = +document.getElementById("color_r").value;
   var g = +document.getElementById("color_g").value;
@@ -77,9 +78,30 @@ function setRGB()
   var xhr = new XMLHttpRequest();
   var url = "/rgb";
 
-  xhr.onreadystatechange = function() {
+  xhr.onreadystatechange = () => {
     if (this.readyState == 4 && this.status == 200) {
-      // Typical action to be performed when the document is ready:
+      if(xhr.responseText != null){
+        alert(xhr.responseText);
+      }
+    }
+  };
+
+  xhr.open("POST", url, true);
+  xhr.send(JSON.stringify(data));
+};
+function setDevice()
+{
+  console.log("device were updated!");
+
+  var pin = +document.getElementById("device_pin").value;
+  var leds = +document.getElementById("device_leds").value;
+  var data = {pin, leds};
+
+  var xhr = new XMLHttpRequest();
+  var url = "/device";
+
+  xhr.onreadystatechange = () => {
+    if (this.readyState == 4 && this.status == 200) {
       if(xhr.responseText != null){
         alert(xhr.responseText);
       }
