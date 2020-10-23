@@ -7,7 +7,7 @@
 #include "storage.h"
 
 const char *WIFI_PWD = "123123123";
-const char *WIFI_SSID = "JUCA.DEV";
+const char *WIFI_SSID = "juca.dev";
 
 IPAddress WIFI_LOCAL_IP(192, 168, 100, 4);
 IPAddress WIFI_GATEWAY(192, 168, 100, 1);
