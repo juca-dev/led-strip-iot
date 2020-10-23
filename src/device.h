@@ -3,19 +3,23 @@
 
 #include <Adafruit_NeoPixel.h>
 
+Adafruit_NeoPixel _strip = Adafruit_NeoPixel(9999, D4, NEO_GRB + NEO_KHZ800);
+
 class Device
 {
 private:
-  int _leds;
-  Adafruit_NeoPixel _core;
+  uint16_t _leds;
 
 public:
-  Device(int leds, int pin)
+  Device(uint16_t leds, int pin)
   {
     this->_leds = leds;
 
-    this->_core = Adafruit_NeoPixel(leds, pin, NEO_GRB + NEO_KHZ800);
-    this->_core.begin();
+    // this->_strip = Adafruit_NeoPixel(leds, pin, NEO_GRB + NEO_KHZ800);
+  }
+  void setup()
+  {
+    _strip.begin();
 
     this->clear();
     delay(500);
@@ -23,23 +27,23 @@ public:
   }
   void clear()
   {
-    for (int i = 0; i < this->_leds; i++)
+    for (uint16_t i = 0; i < this->_leds; i++)
     {
-      this->_core.setPixelColor(i, this->_core.Color(0, 0, 0)); //change RGB color value here
+      _strip.setPixelColor(i, _strip.Color(0, 0, 0)); //change RGB color value here
     }
-    this->_core.show();
+    _strip.show();
   }
   void setBrightness(byte value)
   {
-    this->_core.setBrightness(value);
+    _strip.setBrightness(value);
   }
   void setAll(byte r, byte g, byte b)
   {
-    for (int i = 0; i < this->_leds; i++)
+    for (uint16_t i = 0; i < this->_leds; i++)
     {
-      this->_core.setPixelColor(i, this->_core.Color(r, g, b)); //change RGB color value here
+      _strip.setPixelColor(i, _strip.Color(r, g, b)); //change RGB color value here
     }
-    this->_core.show();
+    _strip.show();
   }
   int *split(String value)
   {
@@ -68,9 +72,9 @@ public:
       int r = res[v];
       int g = res[v + 1];
       int b = res[v + 2];
-      this->_core.setPixelColor(i, this->_core.Color(r, g, b)); //change RGB color value here
+      _strip.setPixelColor(i, _strip.Color(r, g, b)); //change RGB color value here
     }
-    this->_core.show();
+    _strip.show();
   }
 };
 

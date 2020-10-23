@@ -58,6 +58,10 @@ public:
     pinMode(this->_ledPin, OUTPUT);
 
     this->_storage->setup();
+    
+    this->_device->setup();
+    StaticJsonDocument<256> rgb = this->getRGB();
+    this->loadRGB(rgb);
 
     this->server.on("/", HTTP_GET, std::bind(&Api::web, this));
     this->server.on("/toggle", HTTP_POST, std::bind(&Api::toggle, this));
@@ -125,7 +129,7 @@ public:
     }
     int leds = json["leds"];
     int pin = json["pin"];
-    this->_device = new Device(leds, pin);
+    // this->_device = new Device(leds, pin);
 
     StaticJsonDocument<256> rgb = this->getRGB();
     this->loadRGB(rgb);
