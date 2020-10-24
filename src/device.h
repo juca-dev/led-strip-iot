@@ -39,10 +39,7 @@ public:
   }
   void setAll(byte r, byte g, byte b)
   {
-    for (uint16_t i = 0; i < _strip.numPixels(); i++)
-    {
-      _strip.setPixelColor(i, _strip.Color(r, g, b)); //change RGB color value here
-    }
+    _strip.fill(_strip.Color(r, g, b), 0, _strip.numPixels()); //change RGB color value here
     _strip.show();
   }
   int *split(String value)

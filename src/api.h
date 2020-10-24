@@ -57,6 +57,19 @@ private:
     return json;
   }
 
+  StaticJsonDocument<256> getWifi()
+  {
+    String data = this->_storage->get("wifi.json");
+    StaticJsonDocument<256> json;
+    DeserializationError err = deserializeJson(json, data);
+    if (err)
+    {
+      Serial.print("### ERR: API - ");
+      Serial.println(err.c_str());
+    }
+    return json;
+  }
+
 public:
   Api(uint8_t pinLed)
   {
@@ -78,11 +91,14 @@ public:
     json = this->getRGB();
     this->loadRGB(json);
 
-    this->server.on("/", HTTP_GET, std::bind(&Api::web, this));
-    this->server.on("/toggle", HTTP_POST, std::bind(&Api::toggle, this));
-    this->server.on("/wifi", HTTP_POST, std::bind(&Api::setWifi, this));
-    this->server.on("/rgb", HTTP_POST, std::bind(&Api::setRGB, this));
-    this->server.on("/device", HTTP_POST, std::bind(&Api::setDevice, this));
+    this->server.on("/", HTTP_GET, std::bind(&Api::conWeb, this));
+    this->server.on("/toggle", HTTP_POST, std::bind(&Api::conToggle, this));
+    this->server.on("/wifi", HTTP_POST, std::bind(&Api::conSetWifi, this));
+    this->server.on("/wifi", HTTP_GET, std::bind(&Api::conWifi, this));
+    this->server.on("/rgb", HTTP_POST, std::bind(&Api::conSetRGB, this));
+    this->server.on("/rgb", HTTP_GET, std::bind(&Api::conRGB, this));
+    this->server.on("/device", HTTP_POST, std::bind(&Api::conSetDevice, this));
+    this->server.on("/device", HTTP_GET, std::bind(&Api::conDevice, this));
 
     this->server.begin();
   }
@@ -91,22 +107,30 @@ public:
   {
     this->server.handleClient();
   }
-  void web()
+  void conWeb()
   {
     this->server.send_P(200, "text/html", WEB_HTML);
   }
-  void toggle()
+  void conToggle()
   {
     digitalWrite(this->_ledPin, !digitalRead(this->_ledPin));
     this->server.send(204, "");
   }
-  void setRGB()
+  void conSetRGB()
   {
     StaticJsonDocument<256> json = this->getJson();
     this->loadRGB(json);
     String value;
     serializeJson(json, value);
     this->_storage->put("rgb.json", value);
+
+    this->server.send(200, "application/json", value.c_str());
+  }
+  void conRGB()
+  {
+    StaticJsonDocument<256> json = this->getRGB();
+    String value;
+    serializeJson(json, value);
 
     this->server.send(200, "application/json", value.c_str());
   }
@@ -124,7 +148,7 @@ public:
     byte a = json["a"];
     this->_device->setBrightness(a);
   }
-  void setDevice()
+  void conSetDevice()
   {
     StaticJsonDocument<256> json = this->getJson();
     this->loadDevice(json);
@@ -132,6 +156,15 @@ public:
     String value;
     serializeJson(json, value);
     this->_storage->put("device.json", value);
+
+    this->server.send(200, "application/json", value.c_str());
+  }
+  void conDevice()
+  {
+    StaticJsonDocument<256> json = this->getDevice();
+
+    String value;
+    serializeJson(json, value);
 
     this->server.send(200, "application/json", value.c_str());
   }
@@ -149,7 +182,7 @@ public:
     StaticJsonDocument<256> rgb = this->getRGB();
     this->loadRGB(rgb);
   }
-  void setWifi()
+  void conSetWifi()
   {
     StaticJsonDocument<256> json = this->getJson();
     String value;
@@ -161,6 +194,15 @@ public:
     delay(500);
     Serial.println("API: Rebooting");
     ESP.restart(); //reload wifi
+  }
+  void conWifi()
+  {
+    StaticJsonDocument<256> json = this->getWifi();
+
+    String value;
+    serializeJson(json, value);
+
+    this->server.send(200, "application/json", value.c_str());
   }
 };
 

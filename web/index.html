@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Led Controller</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500&display=swap" rel="stylesheet">
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;500&display=swap");
       * {
         margin: 0;
         padding: 0;
@@ -198,7 +198,7 @@
           </div>
           <div>
             <input
-              type="wifi_password"
+              type="text"
               required
               id="wifi_password"
               placeholder="PASSWORD"
@@ -261,6 +261,7 @@
         xhr.onreadystatechange = () => {
           if (xhr.readyState == 4) {
             if (xhr.status < 200 || xhr.status >= 300) {
+              console.error(xhr);
               return reject(xhr.responseText || `Status: ${xhr.status}`);
             }
             return resolve(JSON.parse(xhr.responseText));
@@ -271,7 +272,10 @@
         xhr.send(JSON.stringify(data));
       });
     }
-    async function setWifi() {
+    async function setWifi(ev) {
+      if (ev) {
+        ev.preventDefault();
+      }
       console.log("wifi were updated!");
 
       let ssid = wifi_ssid.value;
@@ -284,9 +288,9 @@
       console.log("rgb were updated!");
 
       let data = hexToRGB(color_rgb.value);
-      data.w = +color_w.value;
+      data.a = +color_w.value;
 
-      var value = `rgb(${data.r},${data.g},${data.b},${data.w / 255})`;
+      var value = `rgb(${data.r},${data.g},${data.b},${data.a / 255})`;
       document.body.style.backgroundColor = `${value}`;
 
       request("POST", "/rgb", data);
@@ -301,6 +305,14 @@
       var value = `rgb(${res.r},${res.g},${res.b},${res.a / 255})`;
       document.body.style.backgroundColor = `${value}`;
     }
+    async function getWifi() {
+      console.log("get rgb!");
+
+      let res = await request("GET", "/wifi");
+
+      wifi_ssid.value = res.ssid;
+      wifi_password.value = res.password;
+    }
     async function setDevice() {
       console.log("device were updated!");
 
@@ -313,13 +325,14 @@
     window.onload = async () => {
       try {
         await getRGB();
-        setTimeout(() => {
-          document.getElementById("loader").remove();
-        }, 3000);
+        await getWifi();
       } catch (err) {
-        console.error(err);
-        // alert(err);
+        alert(err);
       }
+
+      setTimeout(() => {
+        document.getElementById("loader").remove();
+      }, 5000);
     };
   </script>
 </html>
