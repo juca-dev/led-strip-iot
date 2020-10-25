@@ -1,7 +1,7 @@
 #include "wifi.h"
 
-const char *WIFI_PWD = "123123123";
-const char *WIFI_SSID = "juca.dev";
+const char WIFI_PWD[] = "123123123";
+const char WIFI_SSID[] = "juca.dev";
 
 IPAddress WIFI_LOCAL_IP(192, 168, 100, 4);
 IPAddress WIFI_GATEWAY(192, 168, 100, 1);
@@ -21,47 +21,8 @@ void WifiService::setup()
     WiFi.disconnect();
     delay(1000);
     //check for stored credentials
-    String config = this->storage.get("wifi.json");
-    if (config != "")
-    {
-        Serial.println("WIFI: has config file");
-
-        StaticJsonDocument<256> json;
-        DeserializationError err = deserializeJson(json, config);
-        if (err)
-        {
-            Serial.print("### ERR: Wifi deserializeJson - ");
-            Serial.println(err.c_str());
-            return;
-        }
-
-        Serial.print("WIFI: ");
-        serializeJson(json, Serial);
-        Serial.println("");
-
-        const char *ssid = "", *pwd = "";
-        ssid = json["ssid"];
-        pwd = json["password"];
-        WiFi.mode(WIFI_STA);
-        WiFi.begin(ssid, pwd);
-        unsigned long startTime = millis();
-        Serial.print("WIFI: Wait");
-        while (WiFi.status() != WL_CONNECTED)
-        {
-            delay(500);
-            Serial.print(".");
-            digitalWrite(this->ledPin, !digitalRead(this->ledPin));
-            if ((unsigned long)(millis() - startTime) >= 15000)
-                break;
-        }
-        Serial.println("");
-    }
-    else
-    {
-        Serial.println("### ERR: Wifi config: NOK");
-    }
-
-    if (WiFi.status() == WL_CONNECTED)
+    StaticJsonDocument<256> config = this->config();
+    if (this->load(config))
     {
         digitalWrite(this->ledPin, HIGH);
         Serial.println("WIFI: OK");
@@ -77,4 +38,56 @@ void WifiService::setup()
     }
     Serial.println("");
     WiFi.printDiag(Serial);
+}
+StaticJsonDocument<256> WifiService::config()
+{
+    String data = this->storage.get("wifi.json");
+    StaticJsonDocument<256> json;
+    DeserializationError err = deserializeJson(json, data);
+    if (err)
+    {
+        Serial.print("### ERR: WIFI - ");
+        Serial.println(err.c_str());
+    }
+    return json;
+}
+void WifiService::update(String ssid, String password)
+{
+    StaticJsonDocument<200> json;
+    json["ssid"] = ssid;
+    json["password"] = password;
+    String value;
+    serializeJson(json, value);
+    this->storage.put("wifi.json", value);
+}
+bool WifiService::load(StaticJsonDocument<256> json)
+{
+    if (json.isNull() || !json.containsKey("ssid") || !json.containsKey("password"))
+    {
+        Serial.println("wifi: No config");
+        return false;
+    }
+
+    const char *ssid = "", *pwd = "";
+    ssid = json["ssid"];
+    pwd = json["password"];
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, pwd);
+    unsigned long startTime = millis();
+    Serial.print("WIFI: Wait");
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.print(".");
+        digitalWrite(this->ledPin, !digitalRead(this->ledPin));
+        if ((unsigned long)(millis() - startTime) >= 15000) 
+        {
+            Serial.println("wifi: timed out (15s)");
+            return false;
+        }
+    }
+    Serial.println("");
+
+    this->update(json["ssid"], json["password"]);
+    return true;
 }

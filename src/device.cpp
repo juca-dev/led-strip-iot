@@ -5,14 +5,46 @@ void Device::setup()
   strip.updateType(NEO_GRB + NEO_KHZ800);
   strip.begin();
 
+  this->load(this->config());
+
   this->clear();
   delay(500);
   Serial.println("Device: ready");
+}
+StaticJsonDocument<256> Device::config()
+{
+  String data = this->storage.get("device.json");
+  StaticJsonDocument<256> json;
+  DeserializationError err = deserializeJson(json, data);
+  if (err)
+  {
+    Serial.print("### ERR: DEVICE - ");
+    Serial.println(err.c_str());
+  }
+  return json;
 }
 void Device::update(uint16_t leds, uint16_t pin)
 {
   strip.setPin(pin);
   strip.updateLength(leds);
+
+  StaticJsonDocument<200> json;
+  json["leds"] = leds;
+  json["pin"] = pin;
+  String value;
+  serializeJson(json, value);
+  this->storage.put("device.json", value);
+}
+bool Device::load(StaticJsonDocument<256> json)
+{
+  if (json.isNull() || !json.containsKey("leds") || !json.containsKey("pins"))
+  {
+    Serial.println("device: No config");
+    return false;
+  }
+
+  this->update(json["leds"], json["pins"]);
+  return true;
 }
 void Device::clear()
 {
@@ -31,7 +63,7 @@ void Device::setAll(byte r, byte g, byte b)
   strip.fill(strip.Color(r, g, b), 0, strip.numPixels()); //change RGB color value here
   strip.show();
 }
-int* Device::split(String value)
+int *Device::split(String value)
 {
   int result[(strip.numPixels() * 3) + 1];
 

@@ -7,6 +7,7 @@
 #include "storage.h"
 #include "web.h"
 #include "device.h"
+#include "wifi.h"
 
 class Api
 {
@@ -15,25 +16,25 @@ private:
   Storage storage;
   byte ledPin;
   Device device;
+  WifiService wifi = WifiService(LED_BUILTIN);
+
 
   StaticJsonDocument<256> getJson();
-  StaticJsonDocument<256> getRGB();
-  StaticJsonDocument<256> getDevice();
-  StaticJsonDocument<256> getWifi();
+  StaticJsonDocument<256> config();
 public:
   Api(byte pinLed);
   void setup();
   void loop();
-  void loadRGB(StaticJsonDocument<256> json);
-  void loadDevice(StaticJsonDocument<256> json);
+  bool load(StaticJsonDocument<256> json);
   void conWeb();
   void conToggle();
-  void conSetRGB();
-  void conRGB();
-  void conSetDevice();
+  void conConfig();
+  void conConfigPut();
   void conDevice();
-  void conSetWifi();
+  void conDevicePut();
   void conWifi();
+  void conWifiPut();
+  void conReset();
 };
 
 #endif

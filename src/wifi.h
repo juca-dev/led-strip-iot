@@ -15,6 +15,9 @@ private:
 public:
     WifiService(byte pin);
     void setup();
+    StaticJsonDocument<256> config();
+    void update(String ssid, String password);
+    bool load(StaticJsonDocument<256> json);
 };
 
 #endif
