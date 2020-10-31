@@ -98,7 +98,7 @@ void Api::conToggle()
 void Api::conConfigPut()
 {
   StaticJsonDocument<256> json = this->getJson();
-  if (this->load(json))
+  if (!this->load(json))
   {
     this->server.send(400, "application/json", ERR_400);
     return;
@@ -120,7 +120,7 @@ void Api::conConfig()
 void Api::conDevicePut()
 {
   StaticJsonDocument<256> json = this->getJson();
-  if (this->device.load(json))
+  if (!this->device.load(json))
   {
     this->server.send(400, "application/json", ERR_400);
     return;

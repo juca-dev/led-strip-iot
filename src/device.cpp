@@ -23,7 +23,7 @@ StaticJsonDocument<256> Device::config()
   }
   return json;
 }
-void Device::update(uint16_t leds, uint16_t pin)
+void Device::update(uint16_t leds, byte pin)
 {
   strip.setPin(pin);
   strip.updateLength(leds);
@@ -37,13 +37,13 @@ void Device::update(uint16_t leds, uint16_t pin)
 }
 bool Device::load(StaticJsonDocument<256> json)
 {
-  if (json.isNull() || !json.containsKey("leds") || !json.containsKey("pins"))
+  if (json.isNull() || !json.containsKey("leds") || !json.containsKey("pin"))
   {
     Serial.println("device: No config");
     return false;
   }
 
-  this->update(json["leds"], json["pins"]);
+  this->update(json["leds"], json["pin"]);
   return true;
 }
 void Device::clear()

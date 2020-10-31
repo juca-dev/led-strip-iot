@@ -5,7 +5,6 @@ const char WEB_HTML[] PROGMEM = R"=====(
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Led Controller</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500&display=swap" rel="stylesheet">
     <style>
       * {
         margin: 0;
@@ -100,6 +99,9 @@ const char WEB_HTML[] PROGMEM = R"=====(
         height: 3em;
         padding: 0;
       }
+      fieldset > div > input[type="range"] {
+        padding: 1em 0;
+      }
       legend {
         height: 1.5em;
         font-weight: 500;
@@ -190,6 +192,26 @@ const char WEB_HTML[] PROGMEM = R"=====(
       <span>Loading</span>
     </div>
     <main>
+      <form>
+        <fieldset>
+          <legend>Color</legend>
+          <div>
+            <input type="color" id="color_rgb" oninput="setRGB()" />
+            <label for="color_rgb">RGB</label>
+          </div>
+          <div>
+            <input
+              type="range"
+              min="0"
+              max="255"
+              value="0"
+              id="color_w"
+              oninput="setRGB()"
+            />
+            <label for="color_w">Intensity</label>
+          </div>
+        </fieldset>
+      </form>
       <form onsubmit="setWifi()">
         <fieldset>
           <legend>WIFI</legend>
@@ -211,22 +233,19 @@ const char WEB_HTML[] PROGMEM = R"=====(
           </div>
         </fieldset>
       </form>
-      <form>
+      <form onsubmit="setDevice()">
         <fieldset>
-          <legend>Color</legend>
+          <legend>Device</legend>
           <div>
-            <input type="color" id="color_rgb" oninput="setRGB()" />
-            <label for="color_rgb">RGB</label>
+            <input type="number" min="0" max="255" id="device_pin" />
+            <label for="device_pin">PIN</label>
           </div>
           <div>
-            <input
-              type="range"
-              min="0"
-              max="255"
-              id="color_w"
-              oninput="setRGB()"
-            />
-            <label for="color_w">Intensity</label>
+            <input type="number" min="0" max="9999" id="device_leds" />
+            <label for="device_leds">Leds</label>
+          </div>
+          <div>
+            <input type="submit" value="Save" />
           </div>
         </fieldset>
       </form>
@@ -236,7 +255,9 @@ const char WEB_HTML[] PROGMEM = R"=====(
     const wifi_ssid = document.getElementById("wifi_ssid"),
       wifi_password = document.getElementById("wifi_password"),
       color_rgb = document.getElementById("color_rgb"),
-      color_w = document.getElementById("color_w");
+      color_w = document.getElementById("color_w"),
+      device_pin = document.getElementById("device_pin"),
+      device_leds = document.getElementById("device_leds");
 
     function hexToRGB(hex) {
       let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -256,22 +277,30 @@ const char WEB_HTML[] PROGMEM = R"=====(
           .slice(1)
       );
     }
+    async function delay(t) {
+      return await new Promise((resolve) => {
+        setTimeout(resolve, t);
+      });
+    }
     async function request(method, path, data) {
       let xhr = new XMLHttpRequest();
-      return await new Promise((resolve, reject) => {
+      const res = await new Promise((resolve, reject) => {
         xhr.onreadystatechange = () => {
           if (xhr.readyState == 4) {
             if (xhr.status < 200 || xhr.status >= 300) {
               console.error(xhr);
               return reject(xhr.responseText || `Status: ${xhr.status}`);
             }
-            return resolve(JSON.parse(xhr.responseText));
+            return resolve(xhr.responseText.length ? JSON.parse(xhr.responseText) : null);
           }
         };
 
         xhr.open(method, path, true);
         xhr.send(JSON.stringify(data));
       });
+
+      await delay(500);
+      return res;
     }
     async function setWifi(ev) {
       if (ev) {
@@ -299,7 +328,8 @@ const char WEB_HTML[] PROGMEM = R"=====(
     async function getRGB() {
       console.log("get rgb!");
 
-      let res = await request("GET", "/rgb");
+      const res = await request("GET", "/rgb");
+      if (!res) return;
 
       color_rgb.value = rgbToHex(res);
       color_w.value = res.a;
@@ -309,7 +339,8 @@ const char WEB_HTML[] PROGMEM = R"=====(
     async function getWifi() {
       console.log("get rgb!");
 
-      let res = await request("GET", "/wifi");
+      const res = await request("GET", "/wifi");
+      if (!res) return;
 
       wifi_ssid.value = res.ssid;
       wifi_password.value = res.password;
@@ -317,23 +348,31 @@ const char WEB_HTML[] PROGMEM = R"=====(
     async function setDevice() {
       console.log("device were updated!");
 
-      let pin = +document.getElementById("device_pin").value;
-      let leds = +document.getElementById("device_leds").value;
+      let pin = +device_pin.value;
+      let leds = +device_leds.value;
       let data = { pin, leds };
 
       request("POST", "/device", data);
     }
+    async function getDevice() {
+      console.log("get device!");
+
+      const res = await request("GET", "/device");
+      if (!res) return;
+
+      device_pin.value = res.pin;
+      device_leds.value = res.leds;
+    }
     window.onload = async () => {
+      await delay(2000);
       try {
-        await getRGB();
         await getWifi();
+        await getDevice();
+        await getRGB();
       } catch (err) {
         alert(err);
       }
-
-      setTimeout(() => {
-        document.getElementById("loader").remove();
-      }, 5000);
+      document.getElementById("loader").remove();
     };
   </script>
 </html>

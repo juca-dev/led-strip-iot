@@ -15,7 +15,7 @@ private:
 public:
   void setup();
   StaticJsonDocument<256> config();
-  void update(uint16_t leds, uint16_t pin);
+  void update(uint16_t leds, byte pin);
   bool load(StaticJsonDocument<256> json);
   void clear();
   void setBrightness(byte value);
