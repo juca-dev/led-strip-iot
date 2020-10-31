@@ -15,6 +15,9 @@ private:
   ESP8266WebServer server;
   Storage storage;
   byte ledPin;
+  byte powerPin;
+  bool powerBkp;
+  StaticJsonDocument<256> configBkp;
   Device device;
   WifiService wifi = WifiService(LED_BUILTIN);
 
@@ -22,9 +25,10 @@ private:
   StaticJsonDocument<256> getJson();
   StaticJsonDocument<256> config();
 public:
-  Api(byte pinLed);
+  Api(byte ledPin, byte powerPin);
   void setup();
   void loop();
+  void checkPower();
   bool load(StaticJsonDocument<256> json);
   void conWeb();
   void conToggle();

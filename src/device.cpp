@@ -28,7 +28,7 @@ void Device::update(uint16_t leds, byte pin)
   strip.setPin(pin);
   strip.updateLength(leds);
 
-  StaticJsonDocument<200> json;
+  StaticJsonDocument<256> json;
   json["leds"] = leds;
   json["pin"] = pin;
   String value;
@@ -48,15 +48,13 @@ bool Device::load(StaticJsonDocument<256> json)
 }
 void Device::clear()
 {
-  for (uint16_t i = 0; i < strip.numPixels(); i++)
-  {
-    strip.setPixelColor(i, strip.Color(0, 0, 0)); //change RGB color value here
-  }
+  strip.clear();
   strip.show();
 }
 void Device::setBrightness(byte value)
 {
   strip.setBrightness(value);
+  strip.show();
 }
 void Device::setAll(byte r, byte g, byte b)
 {

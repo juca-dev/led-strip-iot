@@ -53,7 +53,7 @@ StaticJsonDocument<256> WifiService::config()
 }
 void WifiService::update(String ssid, String password)
 {
-    StaticJsonDocument<200> json;
+    StaticJsonDocument<256> json;
     json["ssid"] = ssid;
     json["password"] = password;
     String value;

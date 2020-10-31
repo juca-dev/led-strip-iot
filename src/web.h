@@ -203,7 +203,7 @@ const char WEB_HTML[] PROGMEM = R"=====(
             <input
               type="range"
               min="0"
-              max="255"
+              max="254"
               value="0"
               id="color_w"
               oninput="setRGB()"

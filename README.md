@@ -44,7 +44,7 @@ Access `Sketch > Include Library > Manage Libraries...`, looking for:
         "password": "<WIFI_PASSWORD>"
     }
     ```
-  - `POST /rgb` update color (0-255)
+  - `POST /rgb` update color (0-254)
     ```json
     {
         "r": 0,

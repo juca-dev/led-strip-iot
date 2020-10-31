@@ -1,6 +1,7 @@
 #include "api.h"
 
 const char ERR_400[] = "{\"error\":\"invalid params\"}";
+const char ERR_405[] = "{\"error\":\"api power OFF\"}";
 
 StaticJsonDocument<256> Api::getJson()
 {
@@ -29,24 +30,28 @@ StaticJsonDocument<256> Api::config()
   return json;
 }
 
-Api::Api(byte pinLed)
+Api::Api(byte ledPin, byte powerPin)
 {
-  this->ledPin = pinLed;
+  this->ledPin = ledPin;
+  this->powerPin = powerPin;
   Serial.println("API: ready");
 }
 
 void Api::setup()
 {
   pinMode(this->ledPin, OUTPUT);
-  
+  pinMode(this->powerPin, INPUT);
+  delay(250);
+  this->powerBkp = digitalRead(this->powerPin);
+
   this->wifi.setup();
 
   this->storage.setup();
 
   this->device.setup();
 
-  StaticJsonDocument<200> json = this->config();
-  this->load(json);
+  this->configBkp = this->config();
+  this->load(this->configBkp);
 
   this->server.on("/", HTTP_GET, std::bind(&Api::conWeb, this));
   this->server.on("/", HTTP_DELETE, std::bind(&Api::conReset, this));
@@ -63,6 +68,27 @@ void Api::setup()
 void Api::loop()
 {
   this->server.handleClient();
+  this->checkPower();
+}
+void Api::checkPower()
+{
+  if (this->powerBkp == digitalRead(this->powerPin))
+  {
+    return;
+  }
+
+  this->powerBkp = !this->powerBkp;
+  Serial.print("API: power ");
+  Serial.println(this->powerBkp);
+
+  if (this->powerBkp)
+  {
+    this->device.clear();
+  }
+  else
+  {
+    this->load(this->configBkp);
+  }
 }
 bool Api::load(StaticJsonDocument<256> json)
 {
@@ -83,6 +109,7 @@ bool Api::load(StaticJsonDocument<256> json)
   serializeJson(json, value);
 
   this->storage.put("api.json", value);
+  this->configBkp = json;
 
   return true;
 }
@@ -97,6 +124,11 @@ void Api::conToggle()
 }
 void Api::conConfigPut()
 {
+  if (this->powerBkp)
+  {
+    this->server.send(405, "application/json", ERR_405);
+    return;
+  }
   StaticJsonDocument<256> json = this->getJson();
   if (!this->load(json))
   {
@@ -119,6 +151,11 @@ void Api::conConfig()
 }
 void Api::conDevicePut()
 {
+  if (this->powerBkp)
+  {
+    this->server.send(405, "application/json", ERR_405);
+    return;
+  }
   StaticJsonDocument<256> json = this->getJson();
   if (!this->device.load(json))
   {
