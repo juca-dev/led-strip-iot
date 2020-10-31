@@ -10,7 +10,7 @@ void Storage::setup()
 void Storage::put(String key, String value)
 {
   String path = String("/" + key);
-  Serial.println(path);
+  Serial.println("put "+ path);
   File file = SPIFFS.open(path, "w");
   if (!file)
   {
@@ -27,7 +27,7 @@ void Storage::put(String key, String value)
 String Storage::get(String key)
 {
   String path = String("/" + key);
-  Serial.println(path);
+  Serial.println("get " + path);
   //check for stored credentials
   if (!SPIFFS.exists(path))
   {

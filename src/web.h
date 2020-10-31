@@ -212,7 +212,7 @@ const char WEB_HTML[] PROGMEM = R"=====(
           </div>
         </fieldset>
       </form>
-      <form onsubmit="setWifi()">
+      <form onsubmit="return setWifi(event)">
         <fieldset>
           <legend>WIFI</legend>
           <div>
@@ -233,7 +233,7 @@ const char WEB_HTML[] PROGMEM = R"=====(
           </div>
         </fieldset>
       </form>
-      <form onsubmit="setDevice()">
+      <form onsubmit="return setDevice(event)">
         <fieldset>
           <legend>Device</legend>
           <div>
@@ -260,7 +260,7 @@ const char WEB_HTML[] PROGMEM = R"=====(
       device_leds = document.getElementById("device_leds");
 
     function hexToRGB(hex) {
-      let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
       return result
         ? {
             r: parseInt(result[1], 16),
@@ -283,7 +283,7 @@ const char WEB_HTML[] PROGMEM = R"=====(
       });
     }
     async function request(method, path, data) {
-      let xhr = new XMLHttpRequest();
+      const xhr = new XMLHttpRequest();
       const res = await new Promise((resolve, reject) => {
         xhr.onreadystatechange = () => {
           if (xhr.readyState == 4) {
@@ -302,75 +302,89 @@ const char WEB_HTML[] PROGMEM = R"=====(
       await delay(500);
       return res;
     }
-    async function setWifi(ev) {
+    function setWifi(ev) {
       if (ev) {
         ev.preventDefault();
       }
-      console.log("wifi were updated!");
 
-      let ssid = wifi_ssid.value;
-      let password = wifi_password.value;
-      let data = { ssid: ssid, password: password };
+      const ssid = wifi_ssid.value;
+      const password = wifi_password.value;
+      const data = { ssid: ssid, password: password };
 
       request("POST", "/wifi", data);
+      console.log("wifi updated: ", data);
+      return false;
     }
-    async function setRGB() {
-      console.log("rgb were updated!");
+    function setRGB(ev) {
+      if (ev) {
+        ev.preventDefault();
+      }
 
-      let data = hexToRGB(color_rgb.value);
+      const data = hexToRGB(color_rgb.value);
       data.a = +color_w.value;
 
-      var value = `rgb(${data.r},${data.g},${data.b},${data.a / 255})`;
+      const value = `rgb(${data.r},${data.g},${data.b},${data.a / 255})`;
       document.body.style.backgroundColor = `${value}`;
 
       request("POST", "/rgb", data);
+      console.log("rgb updated: ", data);
+      return false;
+    }
+    function setDevice(ev) {
+      if (ev) {
+        ev.preventDefault();
+      }
+
+      const pin = +device_pin.value;
+      const leds = +device_leds.value;
+      const data = { pin, leds };
+
+      request("POST", "/device", data);
+      console.log("device updated: ", data);
+      return false;
     }
     async function getRGB() {
-      console.log("get rgb!");
-
       const res = await request("GET", "/rgb");
+      console.log("rgb: ", res);
       if (!res) return;
 
       color_rgb.value = rgbToHex(res);
       color_w.value = res.a;
-      var value = `rgb(${res.r},${res.g},${res.b},${res.a / 255})`;
+      const value = `rgb(${res.r},${res.g},${res.b},${res.a / 255})`;
       document.body.style.backgroundColor = `${value}`;
     }
     async function getWifi() {
-      console.log("get rgb!");
-
       const res = await request("GET", "/wifi");
+      console.log("wifi: ", res);
       if (!res) return;
 
       wifi_ssid.value = res.ssid;
       wifi_password.value = res.password;
     }
-    async function setDevice() {
-      console.log("device were updated!");
-
-      let pin = +device_pin.value;
-      let leds = +device_leds.value;
-      let data = { pin, leds };
-
-      request("POST", "/device", data);
-    }
     async function getDevice() {
-      console.log("get device!");
-
       const res = await request("GET", "/device");
+      console.log("device: ", res);
       if (!res) return;
 
       device_pin.value = res.pin;
       device_leds.value = res.leds;
     }
+    async function load() {
+      await getWifi();
+      await getDevice();
+      await getRGB();
+    }
     window.onload = async () => {
       await delay(2000);
-      try {
-        await getWifi();
-        await getDevice();
-        await getRGB();
-      } catch (err) {
-        alert(err);
+      let loading = 1;
+      while(loading){
+        try {
+          await load();
+          loading = 0;
+        } catch (err) {
+          console.error(err);
+          alert(`Try again (${loading++})!`);
+        }
       }
       document.getElementById("loader").remove();
     };
